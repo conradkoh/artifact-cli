@@ -5,6 +5,7 @@ import { previewCommand } from './commands/preview';
 import { openCommand } from './commands/open';
 import { listCommand } from './commands/list';
 import { stopCommand } from './commands/stop';
+import { cleanCommand } from './commands/clean';
 import { opencodeCommand } from './commands/opencode';
 
 const program = new Command();
@@ -20,6 +21,7 @@ program.addCommand(previewCommand());  // Keep for backwards compatibility
 program.addCommand(openCommand());      // New preferred command
 program.addCommand(listCommand());
 program.addCommand(stopCommand());
+program.addCommand(cleanCommand());
 program.addCommand(opencodeCommand());
 
 program.parse();
