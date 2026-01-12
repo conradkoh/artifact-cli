@@ -60,13 +60,13 @@ artifact-cli/
 │   │   ├── commands/           # CLI command definitions
 │   │   │   ├── create.ts       # artifact create <file> | artifact create --code <base64>
 │   │   │   ├── update.ts       # artifact update <id> [--code <base64>]
-│   │   │   ├── preview.ts      # artifact preview <id>
 │   │   │   ├── open.ts         # artifact open <id> (starts server if stopped)
 │   │   │   ├── list.ts         # artifact list
 │   │   │   ├── stop.ts         # artifact stop <id>
+│   │   │   ├── clean.ts        # artifact clean [id] [--all] [--force]
+│   │   │   ├── save.ts         # artifact save <id>
+│   │   │   ├── unsave.ts       # artifact unsave <id>
 │   │   │   └── opencode.ts     # artifact opencode install (agent tools)
-│   │   ├── output/             # Output formatters
-│   │   │   └── formatter.ts
 │   │   └── index.ts            # CLI entry point
 │   │
 │   ├── domain/
@@ -103,7 +103,9 @@ artifact-cli/
 └── tsconfig.json
 ```
 
-## Temp Folder Structure
+## Folder Structure
+
+### Temp Directory (default)
 
 Artifacts are stored in the system temp directory with a clean separation of user data and runtime state:
 
@@ -119,11 +121,26 @@ Artifacts are stored in the system temp directory with a clean separation of use
             └── .reload         # Signal file for hot reload
 ```
 
+### Saved Artifacts (project directory)
+
+When you run `artifact save <id>`, the component is persisted to your project:
+
+```
+{project}/
+└── .artifact/
+    └── saved/
+        └── {artifactId}/
+            └── component.tsx   # Commit this to git!
+```
+
+Runtime state (PID, logs) always stays in the temp directory, even for saved artifacts.
+
 **Key Design Decisions:**
 - **Runtime from CLI**: Server code lives in CLI (`src/infrastructure/server/`), not copied per artifact
 - **On-the-fly HTML**: Sandpack HTML is generated at request time, not stored
 - **CLI Upgrades Apply Automatically**: Upgrading the CLI improves all existing artifacts
 - **Clean Data**: Only `component.tsx` (user data) is stored; everything else is ephemeral
+- **Auto-Shutdown**: Servers auto-shutdown after 30s with no active browser tabs (watchers)
 
 ## Key Technologies
 
@@ -147,16 +164,19 @@ interface Artifact {
   sourceFile: string | null; // Original file path (null for inline code)
   sourceCode: string | null; // Inline code content (for agent-created artifacts)
   componentName: string; // Exported component name
-  tempDir: string; // Path to artifact directory in temp folder
+  tempDir: string; // Path to component directory (temp or saved)
   port: number; // Server port
   url: string; // Full URL (e.g., "http://localhost:3001/abc123")
   pid: number | null; // Server process ID (null if not running)
   status: ArtifactStatus; // Current status
+  location: ArtifactLocation; // Where component is stored
+  savedPath: string | null; // Path to saved directory (if saved)
   createdAt: Date;
   updatedAt: Date;
 }
 
 type ArtifactStatus = "starting" | "running" | "stopped" | "error";
+type ArtifactLocation = "temp" | "saved";
 
 /**
  * Result of parsing a React component file
@@ -250,10 +270,12 @@ interface ListCommandOutput {
 
 ### Agent Tools (OpenCode Integration)
 
-The CLI exposes 3 tools for AI agents:
+The CLI exposes 5 tools for AI agents:
 
 | Tool | Arguments | Returns |
 |------|-----------|---------|
+| `artifact-cli_verify` | (none) | Installation status and instructions |
+| `artifact-cli_help` | (none) | Full CLI documentation |
 | `artifact-cli_create` | `code: string`, `name?: string` | Artifact ID, URL, stop instructions |
 | `artifact-cli_update` | `id: string`, `code: string` | Success message with URL |
 | `artifact-cli_open` | `id: string` | Opens browser, handles errors gracefully |

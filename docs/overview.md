@@ -28,8 +28,11 @@ The CLI analyzes React component files, extracts the necessary code and dependen
 |---------|--------|-------------|
 | Create Artifact | ✅ Done | Generate sandpack preview from React component file or inline code |
 | Update Artifact | ✅ Done | Hot reload an existing artifact with updated code |
-| Preview/Open Artifact | ✅ Done | Open artifact URL in default browser (auto-starts server if stopped) |
-| List Artifacts | ✅ Done | Show all artifacts and their status |
+| Open Artifact | ✅ Done | Open artifact URL in default browser (auto-starts server if stopped) |
+| List Artifacts | ✅ Done | Show all artifacts with status, watchers, and location |
 | Stop Artifact | ✅ Done | Stop a running artifact server |
-| OpenCode Integration | ✅ Done | 3 agent-facing tools: create, update, open |
+| Clean Artifacts | ✅ Done | Remove stopped artifacts and their data |
+| Save/Unsave | ✅ Done | Persist artifacts to project directory for version control |
+| Auto-Shutdown | ✅ Done | Servers auto-shutdown after 30s with no active watchers |
+| OpenCode Integration | ✅ Done | 5 agent-facing tools: verify, help, create, update, open |
 | Runtime Separation | ✅ Done | CLI upgrades apply automatically to all artifacts |

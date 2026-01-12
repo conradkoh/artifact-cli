@@ -62,14 +62,6 @@ After modifying your component, update the preview:
 artifact update <artifact-id>
 ```
 
-### Preview an Artifact (deprecated)
-
-Use `artifact open` instead:
-
-```bash
-artifact open <artifact-id>
-```
-
 ### Open an Artifact
 
 Open the artifact URL in your default browser (starts server if stopped):
@@ -165,7 +157,13 @@ artifact create ./src/Button.tsx
 artifact update a1b2c3
 
 # Open it in the browser
-artifact preview a1b2c3
+artifact open a1b2c3
+
+# Save it to your project for version control
+artifact save a1b2c3
+
+# Clean up when done
+artifact clean --all
 ```
 
 ## OpenCode Integration
