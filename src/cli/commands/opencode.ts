@@ -13,41 +13,45 @@ function getOpencodeToolTemplate(): string {
 /**
  * artifact-cli OpenCode integration
  * 
- * This file provides custom tools for OpenCode to create and manage
+ * This file provides 3 tools for OpenCode to create and manage
  * React component previews using artifact-cli.
  * 
  * Available tools:
- *   - artifact-cli_create: Create a preview from a React component
- *   - artifact-cli_update: Update an existing preview
- *   - artifact-cli_preview: Open preview in browser
- *   - artifact-cli_list: List all artifacts and their status
- *   - artifact-cli_stop: Stop artifact server(s)
+ *   - artifact-cli_create: Create a preview from React component code
+ *   - artifact-cli_update: Update an existing preview with new code
+ *   - artifact-cli_open: Open preview in browser
+ * 
+ * The CLI manages file storage, servers, and cleanup internally.
+ * Pass component code directly - no file paths needed.
  */
 
 export const create = tool({
-  description: ${backtick}Create an artifact preview from a React component using Sandpack.
+  description: ${backtick}Create an artifact preview from React component code.
+
+Pass the component code directly as a string. The CLI handles file storage internally.
 
 How it works:
-- Parses your component and detects npm dependencies automatically (Three.js, Framer Motion, etc.)
-- Creates a Sandpack environment with hot reload support
-- Starts a local server that runs until stopped with 'artifact stop <id>'
-
-Requirements:
-- File path can be relative or absolute
-- Must be a React component file (.tsx/.jsx)
-- Local TypeScript errors are OK - Sandpack handles compilation independently
+1. Writes your code to an internal temp directory
+2. Parses the component and detects npm dependencies automatically
+3. Creates a Sandpack environment with hot reload support
+4. Starts a local server and returns the preview URL
 
 Returns:
-- Artifact ID: Use for update/preview/stop commands
-- Preview URL: Open in browser to see the component
+- Artifact ID: Use for update/open commands
+- Preview URL: The browser URL for the preview
+- Stop instructions: How to clean up servers when done
 
-Note: Servers run until explicitly stopped. Use 'artifact list' to see running servers.${backtick},
+Note: Opening the preview is optional - do so based on context.${backtick},
   args: {
-    file: tool.schema.string().describe("Path to the React component file (e.g., ./src/Button.tsx)"),
+    code: tool.schema.string().describe("The React component code (TSX/JSX as a string)"),
+    name: tool.schema.string().optional().describe("Optional component name (auto-detected if omitted)"),
   },
   async execute(args) {
     try {
-      const result = await Bun.${dollar}${backtick}artifact create ${dollar}{args.file}${backtick}.text()
+      // Use Buffer for proper UTF-8 support (btoa fails on non-ASCII characters)
+      const encoded = Buffer.from(args.code).toString('base64')
+      const nameArg = args.name ? ${backtick} --name ${dollar}{args.name}${backtick} : ''
+      const result = await Bun.${dollar}${backtick}artifact create --code ${dollar}{encoded}${dollar}{nameArg}${backtick}.text()
       return result.trim()
     } catch (error) {
       return ${backtick}Error creating artifact: ${dollar}{error}${backtick}
@@ -56,23 +60,23 @@ Note: Servers run until explicitly stopped. Use 'artifact list' to see running s
 })
 
 export const update = tool({
-  description: ${backtick}Update an existing artifact with the latest code changes.
+  description: ${backtick}Update an existing artifact with new component code.
 
-What it does:
-- Re-parses the source file and regenerates the Sandpack environment
-- Triggers hot reload if server is running
-- Restarts the server if it was stopped (preserves the same URL if possible)
+Pass the updated code directly. The CLI handles:
+- Writing the new code to the artifact's temp directory
+- Regenerating the Sandpack environment
+- Hot reloading (or restarting the server if it was stopped)
 
-When to use:
-- After modifying the source component file
-- To restart a stopped server
-- After adding new dependencies to the component${backtick},
+The tool returns when the preview is ready to view.${backtick},
   args: {
     id: tool.schema.string().describe("Artifact ID to update (e.g., a1b2c3)"),
+    code: tool.schema.string().describe("The updated React component code"),
   },
   async execute(args) {
     try {
-      const result = await Bun.${dollar}${backtick}artifact update ${dollar}{args.id}${backtick}.text()
+      // Use Buffer for proper UTF-8 support (btoa fails on non-ASCII characters)
+      const encoded = Buffer.from(args.code).toString('base64')
+      const result = await Bun.${dollar}${backtick}artifact update ${dollar}{args.id} --code ${dollar}{encoded}${backtick}.text()
       return result.trim()
     } catch (error) {
       return ${backtick}Error updating artifact: ${dollar}{error}${backtick}
@@ -80,75 +84,24 @@ When to use:
   },
 })
 
-export const preview = tool({
-  description: ${backtick}Open an artifact preview in the default browser.
+export const open = tool({
+  description: ${backtick}Open an artifact preview in the browser.
 
-What it does:
-- Opens the artifact URL using the system default browser
-- Fails if the server is stopped
+Handles all cases:
+- If artifact exists and server is running: opens browser immediately
+- If artifact exists but server stopped: starts server, then opens browser
+- If artifact not found: returns helpful error message
 
-If preview fails:
-- Use 'artifact list' to check if server is running
-- Use 'artifact update <id>' to restart a stopped server${backtick},
+Use this to revisit previous artifacts or open a newly created one.${backtick},
   args: {
-    id: tool.schema.string().describe("Artifact ID to preview (e.g., a1b2c3)"),
+    id: tool.schema.string().describe("Artifact ID to open (e.g., a1b2c3)"),
   },
   async execute(args) {
     try {
-      const result = await Bun.${dollar}${backtick}artifact preview ${dollar}{args.id}${backtick}.text()
+      const result = await Bun.${dollar}${backtick}artifact open ${dollar}{args.id}${backtick}.text()
       return result.trim()
     } catch (error) {
-      return ${backtick}Error previewing artifact: ${dollar}{error}${backtick}
-    }
-  },
-})
-
-export const list = tool({
-  description: ${backtick}List all artifacts and their server status.
-
-Shows:
-- Artifact ID
-- Component name
-- Status (running/stopped)
-- Preview URL
-
-Use this to check which servers are running before stopping them.${backtick},
-  args: {},
-  async execute() {
-    try {
-      const result = await Bun.${dollar}${backtick}artifact list${backtick}.text()
-      return result.trim()
-    } catch (error) {
-      return ${backtick}Error listing artifacts: ${dollar}{error}${backtick}
-    }
-  },
-})
-
-export const stop = tool({
-  description: ${backtick}Stop artifact server(s) to free up resources.
-
-Usage:
-- Stop single server: provide the artifact ID
-- Stop all servers: set all to true
-
-Stopped servers can be restarted with 'artifact update <id>'.${backtick},
-  args: {
-    id: tool.schema.string().optional().describe("Artifact ID to stop (omit if stopping all)"),
-    all: tool.schema.boolean().optional().describe("Set to true to stop all running servers"),
-  },
-  async execute(args) {
-    try {
-      if (args.all) {
-        const result = await Bun.${dollar}${backtick}artifact stop --all${backtick}.text()
-        return result.trim()
-      }
-      if (!args.id) {
-        return "Error: Please provide an artifact ID or set all: true"
-      }
-      const result = await Bun.${dollar}${backtick}artifact stop ${dollar}{args.id}${backtick}.text()
-      return result.trim()
-    } catch (error) {
-      return ${backtick}Error stopping artifact: ${dollar}{error}${backtick}
+      return ${backtick}Error opening artifact: ${dollar}{error}${backtick}
     }
   },
 })
@@ -180,11 +133,9 @@ export function opencodeCommand(): Command {
         console.log('\n✓ OpenCode tool installed successfully!');
         console.log(`  Location: ~/.config/opencode/tool/artifact-cli.ts`);
         console.log('\n  Available tools:');
-        console.log('    - artifact-cli_create: Create a preview from a React component');
-        console.log('    - artifact-cli_update: Update an existing preview');
-        console.log('    - artifact-cli_preview: Open preview in browser');
-        console.log('    - artifact-cli_list: List all artifacts and status');
-        console.log('    - artifact-cli_stop: Stop server(s)');
+        console.log('    - artifact-cli_create: Create a preview from React component code');
+        console.log('    - artifact-cli_update: Update an existing preview with new code');
+        console.log('    - artifact-cli_open: Open preview in browser');
         console.log('\n  Note: Restart OpenCode to load the new tool.\n');
       } catch (error) {
         console.error('\n✗ Failed to install OpenCode tool:');

@@ -86,6 +86,7 @@ watch(artifactDir, (event, filename) => {
 
 const server = Bun.serve({
   port: ${port},
+  idleTimeout: 0, // Disable timeout for SSE connections
   async fetch(req) {
     const url = new URL(req.url);
     

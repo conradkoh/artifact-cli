@@ -1,39 +1,36 @@
-import type { ComponentAnalysis } from '../../domain/entities/ComponentAnalysis';
+import type { ComponentAnalysis } from "../../domain/entities/ComponentAnalysis";
 
 export function generateSandpackHtml(analysis: ComponentAnalysis): string {
   // Build files object for Sandpack
   const files: Record<string, string> = {};
 
   // Main component file
-  files['/App.tsx'] = generateAppWrapper(analysis);
+  files["/App.tsx"] = generateAppWrapper(analysis);
 
   // Original component
-  files['/Component.tsx'] = analysis.code;
+  files["/Component.tsx"] = analysis.code;
 
   // Local imports
   for (const localImport of analysis.localImports) {
-    const sandpackPath = localImport.importPath.replace(/^\./, '');
-    const ext = sandpackPath.includes('.') ? '' : '.tsx';
+    const sandpackPath = localImport.importPath.replace(/^\./, "");
+    const ext = sandpackPath.includes(".") ? "" : ".tsx";
     files[sandpackPath + ext] = localImport.code;
   }
 
   // Filter out react/react-dom from dependencies (Sandpack provides them)
   const customDeps = analysis.dependencies.filter(
-    (d) => d !== 'react' && d !== 'react-dom'
+    (d) => d !== "react" && d !== "react-dom"
   );
 
   const dependenciesJson = JSON.stringify(
-    customDeps.reduce(
-      (acc, dep) => {
-        acc[dep] = 'latest';
-        return acc;
-      },
-      {} as Record<string, string>
-    )
+    customDeps.reduce((acc, dep) => {
+      acc[dep] = "latest";
+      return acc;
+    }, {} as Record<string, string>)
   );
 
-  const reactVersion = '18.3.1';
-  
+  const reactVersion = "18.3.1";
+
   // Industrial Design System - Dark Steel Theme
   return `<!DOCTYPE html>
 <html lang="en">
@@ -339,8 +336,16 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
     
     // Hot reload listener
     const evtSource = new EventSource('/__reload');
+    evtSource.onopen = () => {
+      console.log('[artifact-cli] Hot reload connected');
+    };
+    evtSource.onerror = (e) => {
+      console.error('[artifact-cli] Hot reload connection error', e);
+    };
     evtSource.onmessage = (event) => {
+      console.log('[artifact-cli] Received:', event.data);
       if (event.data === 'reload') {
+        console.log('[artifact-cli] Reloading page...');
         window.location.reload();
       }
     };
@@ -355,7 +360,7 @@ import ${analysis.componentName} from './Component';
 
 export default function App() {
   return (
-    <div style={{ padding: '20px' }}>
+    <div>
       <${analysis.componentName} />
     </div>
   );

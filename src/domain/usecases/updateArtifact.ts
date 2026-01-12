@@ -1,4 +1,5 @@
 import { writeFileSync } from 'fs';
+import { join } from 'path';
 import type { Artifact } from '../entities/Artifact';
 import type { ArtifactRepository } from '../repositories/ArtifactRepository';
 import type { ComponentParser } from '../services/ComponentParser';
@@ -8,11 +9,13 @@ import { findAvailablePort } from '../../infrastructure/services/BunServerManage
 
 export interface UpdateArtifactInput {
   artifactId: string;
+  code?: string;  // If provided, use this; else re-read from sourceFile/sourceCode
 }
 
 export interface UpdateArtifactOutput {
   artifact: Artifact;
   serverRestarted: boolean;
+  message: string;
 }
 
 export class UpdateArtifactUseCase {
@@ -29,6 +32,24 @@ export class UpdateArtifactUseCase {
     }
 
     let serverRestarted = false;
+
+    // If new code is provided, write it to the component file
+    if (input.code) {
+      const componentPath = join(artifact.tempDir, 'component.tsx');
+      writeFileSync(componentPath, input.code);
+      artifact.sourceCode = input.code;
+      artifact.sourceFile = null; // Clear sourceFile since we're using inline code
+    }
+
+    // Determine which file to parse
+    let fileToAnalyze: string;
+    if (artifact.sourceFile) {
+      // File-based artifact - re-read from original file
+      fileToAnalyze = artifact.sourceFile;
+    } else {
+      // Inline code artifact - read from temp component file
+      fileToAnalyze = join(artifact.tempDir, 'component.tsx');
+    }
 
     // Check if server is running, restart if needed
     const isRunning = await this.serverManager.isRunning(artifact);
@@ -50,7 +71,7 @@ export class UpdateArtifactUseCase {
     }
 
     // Re-parse the component
-    const analysis = await this.parser.analyze(artifact.sourceFile);
+    const analysis = await this.parser.analyze(fileToAnalyze);
 
     // Regenerate Sandpack HTML
     const html = generateSandpackHtml(analysis);
@@ -65,6 +86,11 @@ export class UpdateArtifactUseCase {
     artifact.updatedAt = new Date();
     await this.repository.save(artifact);
 
-    return { artifact, serverRestarted };
+    const statusMessage = serverRestarted ? 'Server restarted' : 'Hot reloaded';
+    return {
+      artifact,
+      serverRestarted,
+      message: `Artifact updated!\n\nID: ${artifact.id}\nURL: ${artifact.url}\nStatus: ${statusMessage}`,
+    };
   }
 }

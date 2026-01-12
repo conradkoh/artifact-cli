@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { createCommand } from './commands/create';
 import { updateCommand } from './commands/update';
 import { previewCommand } from './commands/preview';
+import { openCommand } from './commands/open';
 import { listCommand } from './commands/list';
 import { stopCommand } from './commands/stop';
 import { opencodeCommand } from './commands/opencode';
@@ -15,7 +16,8 @@ program
 
 program.addCommand(createCommand());
 program.addCommand(updateCommand());
-program.addCommand(previewCommand());
+program.addCommand(previewCommand());  // Keep for backwards compatibility
+program.addCommand(openCommand());      // New preferred command
 program.addCommand(listCommand());
 program.addCommand(stopCommand());
 program.addCommand(opencodeCommand());
