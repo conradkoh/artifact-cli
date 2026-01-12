@@ -103,6 +103,20 @@ export async function startArtifactServer(config: ArtifactServerConfig) {
     async fetch(req) {
       const url = new URL(req.url);
 
+      // Status endpoint for CLI queries (watcher count, etc.)
+      if (url.pathname === "/__status") {
+        return new Response(
+          JSON.stringify({
+            artifactId,
+            watchers: clients.size,
+            uptime: process.uptime(),
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
       // SSE endpoint for hot reload
       if (url.pathname === "/__reload") {
         // Store controller reference for cleanup on cancel

@@ -81,24 +81,38 @@ Use this to understand:
 
 ${dollar}{result.trim()}
 
-Quick Start
------------
-1. Create an artifact:
-   artifact create ./MyComponent.tsx
+Quick Start (for agents)
+------------------------
+1. Create an artifact from React code:
+   Use artifact-cli_create with your component code
 
 2. Update with new code:
-   artifact update <id>
+   Use artifact-cli_update with artifact ID and new code
 
 3. Open in browser:
-   artifact open <id>
+   Use artifact-cli_open with artifact ID
 
-4. List all artifacts:
-   artifact list
+Understanding 'artifact list' Output
+------------------------------------
+The list command shows all artifacts with these columns:
 
-5. Stop servers:
-   artifact stop --all
+| Column    | Description                                          |
+|-----------|------------------------------------------------------|
+| ID        | Unique artifact identifier (use for update/open)     |
+| Component | Name of the React component                          |
+| Status    | 'running' = server active, 'stopped' = server down   |
+| Watchers  | Number of browser tabs viewing this artifact         |
+| URL       | Preview URL (only works when status is 'running')    |
 
-For agent usage, pass code directly using --code flag with base64 encoding.${backtick}
+- Watchers = 0 means no one is viewing the preview
+- Servers auto-shutdown after 30s with 0 watchers
+- Use artifact-cli_open to restart a stopped server
+
+Server Lifecycle
+----------------
+- Servers start automatically when you create/open an artifact
+- Servers auto-shutdown 30 seconds after the last browser tab closes
+- Use artifact-cli_open to restart a stopped server${backtick}
     } catch (error) {
       return ${backtick}Error running help command: ${dollar}{error}
 
