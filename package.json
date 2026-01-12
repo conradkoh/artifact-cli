@@ -1,13 +1,39 @@
 {
   "name": "artifact-cli",
+  "version": "0.1.0",
+  "description": "CLI tool for previewing React components in isolated sandboxes using Sandpack",
   "module": "index.ts",
   "type": "module",
-  "private": true,
   "bin": {
-    "artifact": "./index.ts"
+    "artifact": "./bin/artifact.cjs",
+    "artifact-cli": "./bin/artifact.cjs"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "index.ts"
+  ],
   "scripts": {
-    "artifact": "bun run index.ts"
+    "artifact": "bun run index.ts",
+    "dev": "bun run index.ts"
+  },
+  "keywords": [
+    "react",
+    "preview",
+    "sandpack",
+    "cli",
+    "component",
+    "sandbox",
+    "codesandbox"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "node": ">=18"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -17,6 +43,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "bun": "^1.3.5",
     "commander": "^14.0.2",
     "nanoid": "^5.1.6"
   }

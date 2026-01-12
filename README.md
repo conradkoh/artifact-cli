@@ -9,11 +9,28 @@ A CLI tool for previewing React components in isolated sandboxed environments us
 - 🎯 **Isolation** - Each artifact runs in its own server instance
 - 📦 **Auto Dependency Detection** - Parses imports and includes them automatically
 - 🖥️ **Full Screen UI** - Tabbed interface with Code and Preview views
+- ⚡ **Zero Config** - Works out of the box with npx
 
 ## Installation
 
+### Via npx (no installation required)
+
+```bash
+npx artifact-cli create ./src/components/Button.tsx
+```
+
+### Global Installation
+
+```bash
+npm install -g artifact-cli
+artifact create ./src/components/Button.tsx
+```
+
+### Local Development
+
 ```bash
 bun install
+bun run index.ts create ./src/components/Button.tsx
 ```
 
 ## Usage
@@ -23,10 +40,11 @@ bun install
 Generate a preview from a React component file:
 
 ```bash
-bun run index.ts create ./src/components/Button.tsx
+artifact create ./src/components/Button.tsx
 ```
 
 Output:
+
 ```
 ✓ Artifact created successfully!
   ID:  a1b2c3
@@ -41,7 +59,7 @@ Output:
 After modifying your component, update the preview:
 
 ```bash
-bun run index.ts update <artifact-id>
+artifact update <artifact-id>
 ```
 
 ### Preview an Artifact
@@ -49,17 +67,20 @@ bun run index.ts update <artifact-id>
 Open the artifact URL in your default browser:
 
 ```bash
-bun run index.ts preview <artifact-id>
+artifact preview <artifact-id>
 ```
 
 ## Example
 
 ```bash
-# Create a preview of the example Button component
-bun run index.ts create examples/Button.tsx
+# Create a preview of a Button component
+artifact create ./src/Button.tsx
+
+# After making changes, update the preview
+artifact update a1b2c3
 
 # Open it in the browser
-bun run index.ts preview <artifact-id>
+artifact preview a1b2c3
 ```
 
 ## Preview UI
@@ -69,6 +90,13 @@ The preview interface features:
 - **Header** - Shows component name and status indicator
 - **Code Tab** - Full-screen code editor with file tabs
 - **Preview Tab** - Full-screen rendered component
+
+## How It Works
+
+1. **Parse** - The CLI parses your React component and detects dependencies
+2. **Generate** - Creates a Sandpack configuration in a temp directory
+3. **Serve** - Starts an isolated server for the preview
+4. **Preview** - Opens the component in your browser
 
 ## Architecture
 
@@ -94,10 +122,12 @@ src/
 - [Architecture](docs/architecture.md)
 - [Plan 001: Foundation](docs/plans/001-foundation/)
 - [Plan 002: UI Improvements](docs/plans/002-preview-ui-improvements/)
+- [Plan 003: NPM Distribution](docs/plans/003-npm-distribution/)
 
 ## Requirements
 
-- [Bun](https://bun.sh) v1.0+
+- Node.js 18+ (for npx/npm usage)
+- Or [Bun](https://bun.sh) v1.0+ (for local development)
 
 ## License
 
