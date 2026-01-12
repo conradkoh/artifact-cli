@@ -1,19 +1,18 @@
-import { resolve, join } from 'path';
-import { mkdirSync, writeFileSync } from 'fs';
-import { nanoid } from 'nanoid';
-import { createArtifact, type Artifact } from '../entities/Artifact';
-import type { ArtifactRepository } from '../repositories/ArtifactRepository';
-import type { ComponentParser } from '../services/ComponentParser';
-import type { ServerManager } from '../services/ServerManager';
-import { getArtifactDir } from '../../infrastructure/repositories/FileArtifactRepository';
-import { findAvailablePort } from '../../infrastructure/services/BunServerManager';
-import { generateSandpackHtml } from '../../infrastructure/templates/sandpackTemplate';
+import { resolve, join } from "path";
+import { mkdirSync, writeFileSync, readFileSync } from "fs";
+import { nanoid } from "nanoid";
+import { createArtifact, type Artifact } from "../entities/Artifact";
+import type { ArtifactRepository } from "../repositories/ArtifactRepository";
+import type { ComponentParser } from "../services/ComponentParser";
+import type { ServerManager } from "../services/ServerManager";
+import { getArtifactDir } from "../../infrastructure/repositories/FileArtifactRepository";
+import { findAvailablePort } from "../../infrastructure/services/BunServerManager";
 
 export interface CreateArtifactInput {
   // One of these must be provided
-  filePath?: string;    // For CLI file-based creation
-  code?: string;        // For agent inline code creation
-  name?: string;        // Optional component name override
+  filePath?: string; // For CLI file-based creation
+  code?: string; // For agent inline code creation
+  name?: string; // Optional component name override
 }
 
 export interface CreateArtifactOutput {
@@ -31,24 +30,23 @@ export class CreateArtifactUseCase {
 
   async execute(input: CreateArtifactInput): Promise<CreateArtifactOutput> {
     if (!input.filePath && !input.code) {
-      throw new Error('Either filePath or code must be provided');
+      throw new Error("Either filePath or code must be provided");
     }
 
     const id = nanoid(6);
     const artifactDir = getArtifactDir(id);
     mkdirSync(artifactDir, { recursive: true });
 
-    let absolutePath: string;
-    let sourceCode: string | null = null;
+    let sourceCode: string;
+    const componentPath = join(artifactDir, "component.tsx");
 
     if (input.code) {
-      // Write inline code to temp file
+      // Inline code provided - write directly to artifact directory
       sourceCode = input.code;
-      absolutePath = join(artifactDir, 'component.tsx');
-      writeFileSync(absolutePath, sourceCode);
+      writeFileSync(componentPath, sourceCode);
     } else {
-      absolutePath = resolve(input.filePath!);
-      
+      const absolutePath = resolve(input.filePath!);
+
       // Check if artifact already exists for this file
       const existing = await this.repository.findBySourceFile(absolutePath);
       if (existing) {
@@ -63,10 +61,15 @@ export class CreateArtifactUseCase {
         // Clean up stale artifact
         await this.repository.delete(existing.id);
       }
+
+      // Read source file and copy to artifact directory
+      // This ensures the server can access it without relying on external paths
+      sourceCode = readFileSync(absolutePath, "utf-8");
+      writeFileSync(componentPath, sourceCode);
     }
 
-    // Parse the component
-    const analysis = await this.parser.analyze(absolutePath);
+    // Parse the component to validate and get component name
+    const analysis = await this.parser.analyze(componentPath);
 
     // Override component name if provided
     if (input.name) {
@@ -77,21 +80,21 @@ export class CreateArtifactUseCase {
 
     const artifact = createArtifact({
       id,
-      sourceFile: input.code ? null : absolutePath,
+      sourceFile: input.code ? null : resolve(input.filePath!),
       sourceCode,
       componentName: analysis.componentName,
       tempDir: artifactDir,
       port,
     });
 
-    // Generate Sandpack HTML
-    const html = generateSandpackHtml(analysis);
-    writeFileSync(`${artifactDir}/index.html`, html);
+    // Note: We no longer generate index.html here!
+    // The server generates Sandpack HTML on-the-fly at request time.
+    // This ensures CLI upgrades automatically apply to all artifacts.
 
     // Start server
     const { pid } = await this.serverManager.start(artifact);
     artifact.pid = pid;
-    artifact.status = 'running';
+    artifact.status = "running";
 
     // Save artifact
     await this.repository.save(artifact);

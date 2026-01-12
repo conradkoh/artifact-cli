@@ -69,6 +69,18 @@ export class FileArtifactRepository implements ArtifactRepository {
   }
 }
 
+/**
+ * Returns the directory for an artifact's data (component.tsx).
+ * This is the persistent user data directory.
+ */
 export function getArtifactDir(artifactId: string): string {
   return join(ARTIFACT_CLI_DIR, 'artifacts', artifactId);
+}
+
+/**
+ * Returns the directory for an artifact's runtime state (pid, logs, reload signal).
+ * This is ephemeral and can be deleted without losing user data.
+ */
+export function getArtifactRuntimeDir(artifactId: string): string {
+  return join(getArtifactDir(artifactId), '.runtime');
 }
