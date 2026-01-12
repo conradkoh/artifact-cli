@@ -13,10 +13,12 @@ function getOpencodeToolTemplate(): string {
 /**
  * artifact-cli OpenCode integration
  * 
- * This file provides 3 tools for OpenCode to create and manage
+ * This file provides 5 tools for OpenCode to create and manage
  * React component previews using artifact-cli.
  * 
  * Available tools:
+ *   - artifact-cli_verify: Check if CLI is installed, provide installation instructions
+ *   - artifact-cli_help: Show full CLI documentation
  *   - artifact-cli_create: Create a preview from React component code
  *   - artifact-cli_update: Update an existing preview with new code
  *   - artifact-cli_open: Open preview in browser
@@ -24,6 +26,86 @@ function getOpencodeToolTemplate(): string {
  * The CLI manages file storage, servers, and cleanup internally.
  * Pass component code directly - no file paths needed.
  */
+
+export const verify = tool({
+  description: ${backtick}Verify that artifact-cli is installed and available.
+
+Call this first before using other artifact-cli tools to ensure the CLI is properly installed.
+
+Returns:
+- If installed: Version info and confirmation message
+- If not installed: Installation instructions${backtick},
+  args: {},
+  async execute() {
+    try {
+      const result = await Bun.${dollar}${backtick}artifact --version${backtick}.text()
+      return ${backtick}✓ artifact-cli is installed!
+
+Version: ${dollar}{result.trim()}
+
+You can now use the following tools:
+- artifact-cli_create: Create a preview from React code
+- artifact-cli_update: Update an existing preview
+- artifact-cli_open: Open preview in browser
+- artifact-cli_help: Show full documentation${backtick}
+    } catch (error) {
+      return ${backtick}✗ artifact-cli is NOT installed.
+
+To install, run one of these commands:
+
+  # Using Bun (recommended):
+  bun install -g artifact-cli
+
+  # Using npm:
+  npm install -g artifact-cli
+
+After installation, run this verify tool again to confirm.${backtick}
+    }
+  },
+})
+
+export const help = tool({
+  description: ${backtick}Show full artifact-cli documentation and usage examples.
+
+Use this to understand:
+- All available CLI commands
+- How to create, update, and manage artifacts
+- Command options and arguments
+- Usage examples${backtick},
+  args: {},
+  async execute() {
+    try {
+      const result = await Bun.${dollar}${backtick}artifact --help${backtick}.text()
+      return ${backtick}artifact-cli Documentation
+========================
+
+${dollar}{result.trim()}
+
+Quick Start
+-----------
+1. Create an artifact:
+   artifact create ./MyComponent.tsx
+
+2. Update with new code:
+   artifact update <id>
+
+3. Open in browser:
+   artifact open <id>
+
+4. List all artifacts:
+   artifact list
+
+5. Stop servers:
+   artifact stop --all
+
+For agent usage, pass code directly using --code flag with base64 encoding.${backtick}
+    } catch (error) {
+      return ${backtick}Error running help command: ${dollar}{error}
+
+artifact-cli may not be installed. Run artifact-cli_verify to check installation.${backtick}
+    }
+  },
+})
 
 export const create = tool({
   description: ${backtick}Create an artifact preview from React component code.
@@ -133,6 +215,8 @@ export function opencodeCommand(): Command {
         console.log('\n✓ OpenCode tool installed successfully!');
         console.log(`  Location: ~/.config/opencode/tool/artifact-cli.ts`);
         console.log('\n  Available tools:');
+        console.log('    - artifact-cli_verify: Check if CLI is installed');
+        console.log('    - artifact-cli_help: Show full CLI documentation');
         console.log('    - artifact-cli_create: Create a preview from React component code');
         console.log('    - artifact-cli_update: Update an existing preview with new code');
         console.log('    - artifact-cli_open: Open preview in browser');

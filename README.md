@@ -124,18 +124,21 @@ Install artifact-cli as a custom tool for [OpenCode](https://opencode.ai):
 artifact opencode install
 ```
 
-This creates 3 tools that OpenCode's LLM can call:
+This creates 5 tools that OpenCode's LLM can call:
 
 | Tool | Description |
 |------|-------------|
+| `artifact-cli_verify` | Check if CLI is installed, provide installation instructions if not. |
+| `artifact-cli_help` | Show full CLI documentation and usage examples. |
 | `artifact-cli_create` | Create an artifact from inline React code. Returns artifact ID and URL. |
 | `artifact-cli_update` | Update artifact code and hot reload the preview. |
 | `artifact-cli_open` | Open artifact in browser (starts server if stopped). |
 
 **How it works with agents:**
-1. Agent calls `create` with React component code → Gets artifact ID and URL
-2. Agent calls `update` with new code → Preview hot reloads automatically  
-3. Agent calls `open` to show the preview in browser (optional)
+1. Agent calls `verify` to check if artifact-cli is installed
+2. Agent calls `create` with React component code → Gets artifact ID and URL
+3. Agent calls `update` with new code → Preview hot reloads automatically  
+4. Agent calls `open` to show the preview in browser (optional)
 
 The agent passes component code directly (not file paths), and all files are managed in a temp directory transparently.
 
@@ -197,15 +200,6 @@ src/
 
 - [Project Overview](docs/overview.md)
 - [Architecture](docs/architecture.md)
-- [Plan 001: Foundation](docs/plans/001-foundation/)
-- [Plan 002: UI Improvements](docs/plans/002-preview-ui-improvements/)
-- [Plan 003: NPM Distribution](docs/plans/003-npm-distribution/)
-- [Plan 004: Artifact URL & Timeout](docs/plans/004-artifact-url-and-timeout/)
-- [Plan 005: OpenCode Integration](docs/plans/005-opencode-integration/)
-- [Plan 006: Server Lifecycle Improvements](docs/plans/006-server-lifecycle-improvements/)
-- [Plan 007: Simplified Agent Interface](docs/plans/007-simplified-agent-interface/)
-- [Plan 008: Agent Tool Fixes](docs/plans/008-agent-tool-fixes/)
-- [Plan 009: Separate Runtime from Data](docs/plans/009-separate-runtime-from-data/)
 
 ## Requirements
 
