@@ -34,12 +34,13 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
 
   const reactVersion = '18.3.1';
   
+  // Industrial Design System - Dark Steel Theme
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Artifact Preview - ${analysis.componentName}</title>
+  <title>ARTIFACT // ${analysis.componentName.toUpperCase()}</title>
   <script type="importmap">
   {
     "imports": {
@@ -53,73 +54,132 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
   }
   </script>
   <style>
+    /* Industrial Design System - Dark Steel Theme */
+    :root {
+      --bg-primary: #09090b;
+      --bg-surface: rgba(24, 24, 27, 0.5);
+      --text-primary: #fafafa;
+      --text-muted: #71717a;
+      --accent: #fafafa;
+      --accent-subtle: #27272a;
+      --border-color: rgba(250, 250, 250, 0.1);
+      --status-success: #34d399;
+      --status-warning: #fbbf24;
+      --status-error: #f87171;
+      --status-info: #60a5fa;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     html, body, #root { 
       height: 100%; 
       overflow: hidden;
     }
+    
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1e1e1e;
+      background: var(--bg-primary);
+      color: var(--text-primary);
     }
+    
     .app-container {
       height: 100vh;
       display: flex;
       flex-direction: column;
     }
+    
+    /* Header - Industrial Style */
     .header {
-      background: #2d2d2d;
-      color: #fff;
-      padding: 0 16px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(8px);
+      padding: 0 1rem;
       height: 48px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid #3d3d3d;
+      border-bottom: 2px solid var(--border-color);
       flex-shrink: 0;
     }
+    
     .header-left {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0.75rem;
     }
+    
+    /* Square status indicator (not circle - per design system) */
     .status {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #4caf50;
+      width: 6px;
+      height: 6px;
+      background: var(--status-success);
     }
+    
+    .status.warning {
+      background: var(--status-warning);
+    }
+    
+    .status.error {
+      background: var(--status-error);
+    }
+    
+    /* Component name - uppercase, tracked */
     .component-name {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
     }
+    
+    /* Artifact ID badge */
+    .artifact-id {
+      font-size: 10px;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    /* Tabs container */
     .tabs {
       display: flex;
-      gap: 4px;
+      gap: 2px;
     }
+    
+    /* Tab buttons - Industrial style with no rounded corners */
     .tab {
-      padding: 8px 20px;
+      padding: 8px 16px;
       background: transparent;
       border: none;
-      color: #888;
-      font-size: 14px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       cursor: pointer;
-      border-radius: 6px;
-      transition: all 0.15s ease;
+      transition: all 0.1s ease;
+      border-bottom: 2px solid transparent;
     }
+    
     .tab:hover {
-      background: #3d3d3d;
-      color: #fff;
+      color: var(--text-primary);
+      background: var(--accent-subtle);
     }
+    
     .tab.active {
-      background: #0066ff;
-      color: #fff;
+      color: var(--text-primary);
+      background: var(--accent-subtle);
+      border-bottom: 2px solid var(--text-primary);
     }
+    
+    /* Content area */
     .content {
       flex: 1;
       overflow: hidden;
       position: relative;
     }
+    
     .panel {
       position: absolute;
       top: 0;
@@ -128,24 +188,59 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
       bottom: 0;
       display: none;
     }
+    
     .panel.active {
       display: flex;
       flex-direction: column;
     }
+    
     .code-panel {
-      background: #1e1e1e;
+      background: var(--bg-primary);
     }
+    
     .preview-panel {
       background: #ffffff;
     }
+    
+    /* Loading state */
     .loading {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100%;
-      color: #888;
-      font-size: 14px;
+      gap: 1rem;
     }
+    
+    .loading-text {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .loading-bar {
+      width: 120px;
+      height: 2px;
+      background: var(--accent-subtle);
+      overflow: hidden;
+    }
+    
+    .loading-bar::after {
+      content: '';
+      display: block;
+      width: 40%;
+      height: 100%;
+      background: var(--text-primary);
+      animation: loading 1s ease-in-out infinite;
+    }
+    
+    @keyframes loading {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+    
     /* Sandpack overrides for full height */
     .sp-wrapper, .sp-layout, .sp-stack {
       height: 100% !important;
@@ -163,7 +258,10 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
 </head>
 <body>
   <div id="root">
-    <div class="loading">Loading Sandpack...</div>
+    <div class="loading">
+      <div class="loading-bar"></div>
+      <div class="loading-text">Initializing Sandpack</div>
+    </div>
   </div>
   
   <script type="module">
@@ -195,21 +293,21 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
         theme: 'dark',
       },
         h('div', { className: 'app-container' },
-          // Header with tabs
+          // Header with tabs - Industrial Design
           h('div', { className: 'header' },
             h('div', { className: 'header-left' },
               h('span', { className: 'status' }),
-              h('span', { className: 'component-name' }, '${analysis.componentName}')
+              h('span', { className: 'component-name' }, '${analysis.componentName.toUpperCase()}')
             ),
             h('div', { className: 'tabs' },
               h('button', {
                 className: 'tab' + (activeTab === 'code' ? ' active' : ''),
                 onClick: () => setActiveTab('code')
-              }, 'Code'),
+              }, 'CODE'),
               h('button', {
                 className: 'tab' + (activeTab === 'preview' ? ' active' : ''),
                 onClick: () => setActiveTab('preview')
-              }, 'Preview')
+              }, 'PREVIEW')
             )
           ),
           // Content panels
