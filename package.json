@@ -1,6 +1,6 @@
 {
   "name": "artifact-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CLI tool for previewing React components in isolated sandboxes using Sandpack",
   "module": "index.ts",
   "type": "module",
