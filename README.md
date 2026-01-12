@@ -62,12 +62,20 @@ After modifying your component, update the preview:
 artifact update <artifact-id>
 ```
 
-### Preview an Artifact
+### Preview an Artifact (deprecated)
 
-Open the artifact URL in your default browser:
+Use `artifact open` instead:
 
 ```bash
-artifact preview <artifact-id>
+artifact open <artifact-id>
+```
+
+### Open an Artifact
+
+Open the artifact URL in your default browser (starts server if stopped):
+
+```bash
+artifact open <artifact-id>
 ```
 
 ### List Artifacts
@@ -83,10 +91,36 @@ Output:
 ```
 Artifacts:
 
-  ID        Component           Status      URL
-  ----------------------------------------------------------------------
-  a1b2c3    Button              running     http://localhost:3001/a1b2c3
-  d4e5f6    Card                stopped     http://localhost:3002/d4e5f6
+  ID        Component         Status    Watchers  Location  URL
+  ------------------------------------------------------------------------------------------
+  a1b2c3    Button            running   1         temp      http://localhost:3001/a1b2c3
+  d4e5f6    Card              stopped   -         saved     http://localhost:3002/d4e5f6
+```
+
+| Column | Description |
+|--------|-------------|
+| ID | Unique artifact identifier |
+| Component | Name of the React component |
+| Status | `running` = server active, `stopped` = server down |
+| Watchers | Number of browser tabs viewing this artifact |
+| Location | `temp` = in temp folder, `saved` = persisted to project |
+
+### Save an Artifact
+
+Persist an artifact to your project directory for version control:
+
+```bash
+artifact save <artifact-id>
+```
+
+This copies the component to `.artifact/saved/{id}/` in your current directory.
+
+### Unsave an Artifact
+
+Move a saved artifact back to the temp directory:
+
+```bash
+artifact unsave <artifact-id>
 ```
 
 ### Stop Servers
@@ -101,6 +135,24 @@ Stop all running servers:
 
 ```bash
 artifact stop --all
+```
+
+### Clean Artifacts
+
+Remove stopped artifacts:
+
+```bash
+# Remove a single stopped artifact
+artifact clean <artifact-id>
+
+# Remove all stopped artifacts
+artifact clean --all
+
+# Force stop and remove running artifacts
+artifact clean --all --force
+
+# Also remove saved artifacts
+artifact clean --all --include-saved
 ```
 
 ## Example
