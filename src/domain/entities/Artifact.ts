@@ -1,4 +1,5 @@
 export type ArtifactStatus = 'starting' | 'running' | 'stopped' | 'error';
+export type ArtifactLocation = 'temp' | 'saved';
 
 export interface Artifact {
   id: string;
@@ -12,6 +13,9 @@ export interface Artifact {
   status: ArtifactStatus;
   createdAt: Date;
   updatedAt: Date;
+  // Location fields
+  location: ArtifactLocation;     // 'temp' or 'saved'
+  savedPath: string | null;       // Absolute path to saved .artifact/saved/{id}/ directory
 }
 
 export function createArtifact(params: {
@@ -21,6 +25,8 @@ export function createArtifact(params: {
   componentName: string;
   tempDir: string;
   port: number;
+  location?: ArtifactLocation;
+  savedPath?: string | null;
 }): Artifact {
   return {
     id: params.id,
@@ -34,5 +40,7 @@ export function createArtifact(params: {
     status: 'starting',
     createdAt: new Date(),
     updatedAt: new Date(),
+    location: params.location ?? 'temp',
+    savedPath: params.savedPath ?? null,
   };
 }

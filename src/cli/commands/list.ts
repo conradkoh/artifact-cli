@@ -56,12 +56,13 @@ export function listCommand(): Command {
         console.log(
           "  " +
             "ID".padEnd(10) +
-            "Component".padEnd(20) +
-            "Status".padEnd(12) +
+            "Component".padEnd(18) +
+            "Status".padEnd(10) +
             "Watchers".padEnd(10) +
+            "Location".padEnd(10) +
             "URL"
         );
-        console.log("  " + "-".repeat(80));
+        console.log("  " + "-".repeat(90));
 
         for (const artifact of artifacts) {
           const { isRunning, watchers } = await getArtifactStatus(
@@ -72,15 +73,20 @@ export function listCommand(): Command {
           const statusColor = isRunning ? "\x1b[32m" : "\x1b[90m"; // green or gray
           const reset = "\x1b[0m";
           const watcherDisplay = watchers !== null ? String(watchers) : "-";
+          const location = artifact.location === "saved" ? "saved" : "temp";
+          const locationColor = artifact.location === "saved" ? "\x1b[36m" : "\x1b[90m"; // cyan or gray
 
           console.log(
             "  " +
               artifact.id.padEnd(10) +
-              artifact.componentName.padEnd(20) +
+              artifact.componentName.substring(0, 17).padEnd(18) +
               statusColor +
-              status.padEnd(12) +
+              status.padEnd(10) +
               reset +
               watcherDisplay.padEnd(10) +
+              locationColor +
+              location.padEnd(10) +
+              reset +
               artifact.url
           );
         }

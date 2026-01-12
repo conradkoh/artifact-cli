@@ -25,6 +25,9 @@ function readArtifacts(): Artifact[] {
       ...a,
       createdAt: new Date(a.createdAt),
       updatedAt: new Date(a.updatedAt),
+      // Migration: default location to 'temp' for existing artifacts
+      location: a.location ?? 'temp',
+      savedPath: a.savedPath ?? null,
     }));
   } catch {
     return [];

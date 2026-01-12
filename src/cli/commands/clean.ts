@@ -10,8 +10,9 @@ export function cleanCommand(): Command {
     .description("Remove stopped artifacts and their data")
     .option("-a, --all", "Remove all stopped artifacts")
     .option("-f, --force", "Also stop running servers before removing")
+    .option("--include-saved", "Also clean saved artifacts (default: skip saved)")
     .argument("[id]", "Artifact ID to remove (omit if using --all)")
-    .action(async (id: string | undefined, options: { all?: boolean; force?: boolean }) => {
+    .action(async (id: string | undefined, options: { all?: boolean; force?: boolean; includeSaved?: boolean }) => {
       try {
         const repository = new FileArtifactRepository();
         const serverManager = new BunServerManager();
@@ -20,9 +21,16 @@ export function cleanCommand(): Command {
           // Clean all stopped artifacts
           const artifacts = await repository.findAll();
           let cleanedCount = 0;
-          let skippedCount = 0;
+          let skippedRunning = 0;
+          let skippedSaved = 0;
 
           for (const artifact of artifacts) {
+            // Skip saved artifacts unless --include-saved
+            if (artifact.location === "saved" && !options.includeSaved) {
+              skippedSaved++;
+              continue;
+            }
+
             const isRunning = await serverManager.isRunning(artifact);
 
             if (isRunning) {
@@ -30,17 +38,28 @@ export function cleanCommand(): Command {
                 // Stop the server first
                 await serverManager.stop(artifact);
               } else {
-                skippedCount++;
+                skippedRunning++;
                 continue;
               }
             }
 
             // Remove artifact directory
-            const artifactDir = getArtifactDir(artifact.id);
+            const artifactDir = artifact.location === "saved" && artifact.savedPath
+              ? artifact.savedPath
+              : getArtifactDir(artifact.id);
             try {
               rmSync(artifactDir, { recursive: true, force: true });
             } catch {
               // Directory might not exist
+            }
+
+            // Also remove temp runtime dir if it's a saved artifact
+            if (artifact.location === "saved") {
+              try {
+                rmSync(getArtifactDir(artifact.id), { recursive: true, force: true });
+              } catch {
+                // Directory might not exist
+              }
             }
 
             // Remove from repository
@@ -48,12 +67,15 @@ export function cleanCommand(): Command {
             cleanedCount++;
           }
 
-          if (cleanedCount === 0 && skippedCount === 0) {
+          if (cleanedCount === 0 && skippedRunning === 0 && skippedSaved === 0) {
             console.log("\nNo artifacts to clean.\n");
           } else {
             console.log(`\n✓ Removed ${cleanedCount} artifact${cleanedCount !== 1 ? "s" : ""}`);
-            if (skippedCount > 0) {
-              console.log(`  Skipped ${skippedCount} running artifact${skippedCount !== 1 ? "s" : ""} (use --force to remove)`);
+            if (skippedRunning > 0) {
+              console.log(`  Skipped ${skippedRunning} running artifact${skippedRunning !== 1 ? "s" : ""} (use --force to remove)`);
+            }
+            if (skippedSaved > 0) {
+              console.log(`  Skipped ${skippedSaved} saved artifact${skippedSaved !== 1 ? "s" : ""} (use --include-saved to remove)`);
             }
             console.log("");
           }
@@ -64,7 +86,8 @@ export function cleanCommand(): Command {
           console.error("\n✗ Please provide an artifact ID or use --all\n");
           console.log("  Usage: artifact clean <id>");
           console.log("         artifact clean --all");
-          console.log("         artifact clean --all --force  (also stops running servers)\n");
+          console.log("         artifact clean --all --force  (also stops running servers)");
+          console.log("         artifact clean --all --include-saved  (also cleans saved artifacts)\n");
           process.exit(1);
         }
 
@@ -73,6 +96,13 @@ export function cleanCommand(): Command {
 
         if (!artifact) {
           console.error(`\n✗ Artifact not found: ${id}\n`);
+          process.exit(1);
+        }
+
+        // Warn about saved artifacts
+        if (artifact.location === "saved" && !options.includeSaved) {
+          console.error(`\n✗ Artifact ${id} is saved at ${artifact.savedPath}`);
+          console.log("  Use --include-saved to remove saved artifacts\n");
           process.exit(1);
         }
 
@@ -90,11 +120,22 @@ export function cleanCommand(): Command {
         }
 
         // Remove artifact directory
-        const artifactDir = getArtifactDir(artifact.id);
+        const artifactDir = artifact.location === "saved" && artifact.savedPath
+          ? artifact.savedPath
+          : getArtifactDir(artifact.id);
         try {
           rmSync(artifactDir, { recursive: true, force: true });
         } catch {
           // Directory might not exist
+        }
+
+        // Also remove temp runtime dir if it's a saved artifact
+        if (artifact.location === "saved") {
+          try {
+            rmSync(getArtifactDir(artifact.id), { recursive: true, force: true });
+          } catch {
+            // Directory might not exist
+          }
         }
 
         // Remove from repository

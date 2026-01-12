@@ -20,10 +20,17 @@ function getServerEntryPoint(): string {
 
 export class BunServerManager implements ServerManager {
   async start(artifact: Artifact): Promise<{ pid: number; port: number }> {
-    const artifactDir = getArtifactDir(artifact.id);
+    // Use artifact.tempDir which points to the correct location
+    // (saved path for saved artifacts, temp path for temp artifacts)
+    const artifactDir = artifact.tempDir;
+    
+    // Runtime state always goes to temp directory
     const runtimeDir = getArtifactRuntimeDir(artifact.id);
 
-    // Ensure runtime directory exists
+    // Ensure both directories exist
+    if (!existsSync(artifactDir)) {
+      mkdirSync(artifactDir, { recursive: true });
+    }
     if (!existsSync(runtimeDir)) {
       mkdirSync(runtimeDir, { recursive: true });
     }

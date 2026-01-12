@@ -6,6 +6,8 @@ import { openCommand } from './commands/open';
 import { listCommand } from './commands/list';
 import { stopCommand } from './commands/stop';
 import { cleanCommand } from './commands/clean';
+import { saveCommand } from './commands/save';
+import { unsaveCommand } from './commands/unsave';
 import { opencodeCommand } from './commands/opencode';
 
 const program = new Command();
@@ -22,6 +24,8 @@ program.addCommand(openCommand());      // New preferred command
 program.addCommand(listCommand());
 program.addCommand(stopCommand());
 program.addCommand(cleanCommand());
+program.addCommand(saveCommand());
+program.addCommand(unsaveCommand());
 program.addCommand(opencodeCommand());
 
 program.parse();
