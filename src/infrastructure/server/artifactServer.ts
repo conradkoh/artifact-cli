@@ -9,6 +9,9 @@ export interface ArtifactServerConfig {
   artifactDir: string;
 }
 
+// Idle timeout before auto-shutdown (30 seconds)
+const IDLE_TIMEOUT_MS = 30_000;
+
 export async function startArtifactServer(config: ArtifactServerConfig) {
   const { artifactId, port, artifactDir } = config;
   const componentPath = join(artifactDir, "component.tsx");
@@ -24,8 +27,50 @@ export async function startArtifactServer(config: ArtifactServerConfig) {
   // Write PID file
   writeFileSync(pidFile, process.pid.toString());
 
-  // SSE clients for hot reload
+  // SSE clients for hot reload (also used for watcher tracking)
   const clients: Set<ReadableStreamDefaultController> = new Set();
+
+  // Idle timer for auto-shutdown
+  let idleTimer: Timer | null = null;
+
+  // Reference to server (set after Bun.serve)
+  let server: ReturnType<typeof Bun.serve>;
+
+  // Called when a client connects
+  const onClientConnect = (controller: ReadableStreamDefaultController) => {
+    clients.add(controller);
+
+    // Cancel any pending shutdown
+    if (idleTimer) {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+      console.log(`[${artifactId}] Client connected, cancelled idle shutdown`);
+    }
+
+    console.log(`[${artifactId}] Client connected, ${clients.size} watcher(s)`);
+  };
+
+  // Called when a client disconnects
+  const onClientDisconnect = (controller: ReadableStreamDefaultController) => {
+    clients.delete(controller);
+
+    console.log(
+      `[${artifactId}] Client disconnected, ${clients.size} watcher(s) remaining`
+    );
+
+    // Start idle timer if no clients left
+    if (clients.size === 0) {
+      console.log(
+        `[${artifactId}] No watchers, will shutdown in ${IDLE_TIMEOUT_MS / 1000}s...`
+      );
+
+      idleTimer = setTimeout(() => {
+        console.log(`[${artifactId}] Idle timeout reached, shutting down...`);
+        server.stop();
+        process.exit(0);
+      }, IDLE_TIMEOUT_MS);
+    }
+  };
 
   // Notify all clients to reload
   const notifyReload = () => {
@@ -52,7 +97,7 @@ export async function startArtifactServer(config: ArtifactServerConfig) {
     }
   });
 
-  const server = Bun.serve({
+  server = Bun.serve({
     port,
     idleTimeout: 0, // Disable timeout for SSE connections
     async fetch(req) {
@@ -60,13 +105,19 @@ export async function startArtifactServer(config: ArtifactServerConfig) {
 
       // SSE endpoint for hot reload
       if (url.pathname === "/__reload") {
+        // Store controller reference for cleanup on cancel
+        let streamController: ReadableStreamDefaultController;
+
         const stream = new ReadableStream({
           start(controller) {
-            clients.add(controller);
+            streamController = controller;
+            onClientConnect(controller);
             controller.enqueue("data: connected\n\n");
           },
-          cancel(controller) {
-            clients.delete(controller);
+          cancel() {
+            // Note: cancel() receives a reason, not the controller
+            // We need to use the captured controller reference
+            onClientDisconnect(streamController);
           },
         });
 
