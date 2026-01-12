@@ -53,13 +53,16 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
   }
   </script>
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { 
+      height: 100%; 
+      overflow: hidden;
+    }
     body { 
-      margin: 0; 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #1e1e1e;
     }
-    #root { 
+    .app-container {
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -67,21 +70,73 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
     .header {
       background: #2d2d2d;
       color: #fff;
-      padding: 12px 16px;
-      font-size: 14px;
+      padding: 0 16px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #3d3d3d;
+      flex-shrink: 0;
+    }
+    .header-left {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .header .status {
+    .status {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: #4caf50;
     }
-    .sandpack-container {
+    .component-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+    }
+    .tab {
+      padding: 8px 20px;
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .tab:hover {
+      background: #3d3d3d;
+      color: #fff;
+    }
+    .tab.active {
+      background: #0066ff;
+      color: #fff;
+    }
+    .content {
       flex: 1;
       overflow: hidden;
+      position: relative;
+    }
+    .panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+    }
+    .panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+    .code-panel {
+      background: #1e1e1e;
+    }
+    .preview-panel {
+      background: #ffffff;
     }
     .loading {
       display: flex;
@@ -91,48 +146,98 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
       color: #888;
       font-size: 14px;
     }
+    /* Sandpack overrides for full height */
+    .sp-wrapper, .sp-layout, .sp-stack {
+      height: 100% !important;
+    }
+    .sp-code-editor {
+      height: 100% !important;
+    }
+    .sp-preview-container {
+      height: 100% !important;
+    }
+    .sp-preview-iframe {
+      height: 100% !important;
+    }
   </style>
 </head>
 <body>
   <div id="root">
-    <div class="header">
-      <span class="status"></span>
-      <span>${analysis.componentName}</span>
-    </div>
-    <div class="sandpack-container" id="sandpack">
-      <div class="loading">Loading Sandpack...</div>
-    </div>
+    <div class="loading">Loading Sandpack...</div>
   </div>
   
   <script type="module">
-    import React from 'react';
+    import React, { useState } from 'react';
     import { createRoot } from 'react-dom/client';
-    import { Sandpack } from '@codesandbox/sandpack-react';
+    import { 
+      SandpackProvider, 
+      SandpackCodeEditor,
+      SandpackPreview,
+      SandpackFileExplorer,
+      SandpackLayout
+    } from '@codesandbox/sandpack-react';
     
     const files = ${JSON.stringify(files, null, 2)};
     
     const customSetup = {
       dependencies: ${dependenciesJson}
     };
+
+    const h = React.createElement;
     
     function App() {
-      return React.createElement(Sandpack, {
+      const [activeTab, setActiveTab] = useState('preview');
+      
+      return h(SandpackProvider, {
         files,
         customSetup,
         template: 'react-ts',
         theme: 'dark',
-        options: {
-          showNavigator: false,
-          showTabs: true,
-          showLineNumbers: true,
-          editorHeight: '100%',
-        },
-      });
+      },
+        h('div', { className: 'app-container' },
+          // Header with tabs
+          h('div', { className: 'header' },
+            h('div', { className: 'header-left' },
+              h('span', { className: 'status' }),
+              h('span', { className: 'component-name' }, '${analysis.componentName}')
+            ),
+            h('div', { className: 'tabs' },
+              h('button', {
+                className: 'tab' + (activeTab === 'code' ? ' active' : ''),
+                onClick: () => setActiveTab('code')
+              }, 'Code'),
+              h('button', {
+                className: 'tab' + (activeTab === 'preview' ? ' active' : ''),
+                onClick: () => setActiveTab('preview')
+              }, 'Preview')
+            )
+          ),
+          // Content panels
+          h('div', { className: 'content' },
+            // Code panel
+            h('div', { className: 'panel code-panel' + (activeTab === 'code' ? ' active' : '') },
+              h(SandpackCodeEditor, {
+                showTabs: true,
+                showLineNumbers: true,
+                style: { height: '100%' }
+              })
+            ),
+            // Preview panel
+            h('div', { className: 'panel preview-panel' + (activeTab === 'preview' ? ' active' : '') },
+              h(SandpackPreview, {
+                showOpenInCodeSandbox: false,
+                showRefreshButton: true,
+                style: { height: '100%' }
+              })
+            )
+          )
+        )
+      );
     }
     
-    const container = document.getElementById('sandpack');
+    const container = document.getElementById('root');
     const root = createRoot(container);
-    root.render(React.createElement(App));
+    root.render(h(App));
     
     // Hot reload listener
     const evtSource = new EventSource('/__reload');
