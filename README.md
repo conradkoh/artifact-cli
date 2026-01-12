@@ -83,6 +83,19 @@ artifact update a1b2c3
 artifact preview a1b2c3
 ```
 
+## OpenCode Integration
+
+Install artifact-cli as a custom tool for [OpenCode](https://opencode.ai):
+
+```bash
+artifact opencode install
+```
+
+This creates tools that OpenCode's LLM can call:
+- `artifact-cli_create` - Create a preview from a React component
+- `artifact-cli_update` - Update an existing preview  
+- `artifact-cli_preview` - Open preview in browser
+
 ## Preview UI
 
 The preview interface features:
@@ -123,6 +136,8 @@ src/
 - [Plan 001: Foundation](docs/plans/001-foundation/)
 - [Plan 002: UI Improvements](docs/plans/002-preview-ui-improvements/)
 - [Plan 003: NPM Distribution](docs/plans/003-npm-distribution/)
+- [Plan 004: Artifact URL & Timeout](docs/plans/004-artifact-url-and-timeout/)
+- [Plan 005: OpenCode Integration](docs/plans/005-opencode-integration/)
 
 ## Requirements
 
