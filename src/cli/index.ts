@@ -15,7 +15,7 @@ const program = new Command();
 program
   .name('artifact')
   .description('CLI tool for previewing React components in isolated sandboxes')
-  .version('0.1.0');
+  .version('0.2.1');
 
 program.addCommand(createCommand());
 program.addCommand(updateCommand());
