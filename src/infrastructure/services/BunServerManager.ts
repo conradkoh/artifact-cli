@@ -2,10 +2,7 @@ import { existsSync, writeFileSync, readFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import type { Artifact } from "../../domain/entities/Artifact";
 import type { ServerManager } from "../../domain/services/ServerManager";
-import {
-  getArtifactDir,
-  getArtifactRuntimeDir,
-} from "../repositories/FileArtifactRepository";
+import { getArtifactRuntimeDir } from "../repositories/FileArtifactRepository";
 
 /**
  * Returns the path to the CLI's server entry point.
