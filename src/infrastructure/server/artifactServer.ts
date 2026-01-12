@@ -7,17 +7,17 @@ export interface ArtifactServerConfig {
   artifactId: string;
   port: number;
   artifactDir: string;
+  runtimeDir: string;
 }
 
 // Idle timeout before auto-shutdown (30 seconds)
 const IDLE_TIMEOUT_MS = 30_000;
 
 export async function startArtifactServer(config: ArtifactServerConfig) {
-  const { artifactId, port, artifactDir } = config;
+  const { artifactId, port, artifactDir, runtimeDir } = config;
   const componentPath = join(artifactDir, "component.tsx");
-  const runtimeDir = join(artifactDir, ".runtime");
 
-  // Ensure runtime directory exists
+  // Ensure runtime directory exists (always in temp, never in saved folder)
   if (!existsSync(runtimeDir)) {
     mkdirSync(runtimeDir, { recursive: true });
   }

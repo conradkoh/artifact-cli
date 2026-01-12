@@ -42,12 +42,12 @@ export class BunServerManager implements ServerManager {
     const serverEntry = getServerEntryPoint();
 
     // Start the server using CLI's server module (not a copied script)
-    // Arguments: artifactId, port, artifactDir
+    // Arguments: artifactId, port, artifactDir, runtimeDir
     Bun.spawn(
       [
         "sh",
         "-c",
-        `nohup bun run "${serverEntry}" "${artifact.id}" "${artifact.port}" "${artifactDir}" > "${logFile}" 2>&1 &`,
+        `nohup bun run "${serverEntry}" "${artifact.id}" "${artifact.port}" "${artifactDir}" "${runtimeDir}" > "${logFile}" 2>&1 &`,
       ],
       {
         cwd: artifactDir,
