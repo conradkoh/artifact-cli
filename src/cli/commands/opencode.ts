@@ -102,11 +102,13 @@ The list command shows all artifacts with these columns:
 | Component | Name of the React component                          |
 | Status    | 'running' = server active, 'stopped' = server down   |
 | Watchers  | Number of browser tabs viewing this artifact         |
+| Location  | 'temp' = in temp folder, 'saved' = persisted to project |
 | URL       | Preview URL (only works when status is 'running')    |
 
 - Watchers = 0 means no one is viewing the preview
 - Servers auto-shutdown after 30s with 0 watchers
 - Use artifact-cli_open to restart a stopped server
+- Saved artifacts persist across restarts and can be committed to git
 
 Server Lifecycle
 ----------------
