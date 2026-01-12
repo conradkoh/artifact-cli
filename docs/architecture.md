@@ -7,15 +7,14 @@
 │                        CLI Layer                                │
 │  (Command parsing, argument validation, output formatting)      │
 ├─────────────────────────────────────────────────────────────────┤
-│                     Application Layer                           │
-│  (Use case orchestration: CreateArtifact, UpdateArtifact, etc.) │
-├─────────────────────────────────────────────────────────────────┤
 │                       Domain Layer                              │
-│  (Artifact entity, ComponentAnalysis, Repository interfaces)    │
+│  (Entities, Use Cases, Repository/Service interfaces)           │
+│  CreateArtifact, UpdateArtifact, PreviewArtifact use cases      │
 │                  ⚠️ NO EXTERNAL DEPENDENCIES                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                   Infrastructure Layer                          │
 │  (File system, TypeScript compiler API, Server management)      │
+│            Implements Domain interfaces                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -44,13 +43,13 @@ User Command
 
 ## Design Patterns
 
-| Pattern                  | Usage                                                                         |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| **Clean Architecture**   | Separation of concerns across CLI, Application, Domain, Infrastructure layers |
-| **Repository Pattern**   | Abstract storage operations for artifacts (`ArtifactRepository`)              |
-| **Dependency Injection** | Use cases receive dependencies via constructor for testability                |
-| **Command Pattern**      | Each CLI command maps to a use case handler                                   |
-| **Factory Pattern**      | `ArtifactFactory` creates properly configured artifact instances              |
+| Pattern                  | Usage                                                                   |
+| ------------------------ | ----------------------------------------------------------------------- |
+| **Clean Architecture**   | Separation of concerns across CLI, Domain, Infrastructure layers       |
+| **Repository Pattern**   | Abstract storage operations for artifacts (`ArtifactRepository`)        |
+| **Dependency Injection** | Use cases receive dependencies via constructor for testability          |
+| **Command Pattern**      | Each CLI command maps to a use case handler                             |
+| **Factory Pattern**      | `ArtifactFactory` creates properly configured artifact instances        |
 
 ## Folder Structure
 
@@ -68,20 +67,16 @@ artifact-cli/
 │   │   │   └── formatter.ts
 │   │   └── index.ts            # CLI entry point
 │   │
-│   ├── application/
-│   │   ├── usecases/           # Use case orchestration
+│   ├── domain/
+│   │   ├── entities/           # Core business entities
+│   │   │   ├── Artifact.ts
+│   │   │   └── ComponentAnalysis.ts
+│   │   ├── usecases/           # Use case orchestration (business logic)
 │   │   │   ├── createArtifact.ts
 │   │   │   ├── updateArtifact.ts
 │   │   │   ├── previewArtifact.ts
 │   │   │   ├── listArtifacts.ts
 │   │   │   └── stopArtifact.ts
-│   │   └── dto/                # Data transfer objects
-│   │       └── types.ts
-│   │
-│   ├── domain/
-│   │   ├── entities/           # Core business entities
-│   │   │   ├── Artifact.ts
-│   │   │   └── ComponentAnalysis.ts
 │   │   ├── repositories/       # Repository interfaces
 │   │   │   └── ArtifactRepository.ts
 │   │   └── services/           # Domain service interfaces

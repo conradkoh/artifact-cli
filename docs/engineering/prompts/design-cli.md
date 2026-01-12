@@ -122,14 +122,13 @@ Architectural changes required for this feature.
 
 ### Clean Architecture for CLI Tools
 
-| Layer              | Responsibility                                    | Dependencies      |
-| ------------------ | ------------------------------------------------- | ----------------- |
-| **Presentation**   | CLI commands, argument parsing, output formatting | Application       |
-| **Application**    | Use case orchestration, DTOs                      | Domain            |
-| **Domain**         | Entities, use cases, repository interfaces        | None (pure)       |
-| **Infrastructure** | File I/O, external APIs, persistence              | Domain interfaces |
+| Layer              | Responsibility                                         | Dependencies      |
+| ------------------ | ------------------------------------------------------ | ----------------- |
+| **Presentation**   | CLI commands, argument parsing, output formatting      | Domain            |
+| **Domain**         | Entities, use cases, repository/service interfaces     | None (pure)       |
+| **Infrastructure** | File I/O, external APIs, persistence implementations   | Domain interfaces |
 
-Key principle: **Domain layer has NO external dependencies**. All external concerns are abstracted via interfaces.
+Key principle: **Domain layer has NO external dependencies**. All external concerns are abstracted via interfaces. Use cases live in the Domain layer and orchestrate business logic through dependency injection.
 
 ### Standard Folder Structure
 
@@ -191,16 +190,15 @@ Only define contracts that are specific to the requirements.
 │              CLI / Presentation             │
 │     (Commands, Args, Output Formatting)     │
 ├─────────────────────────────────────────────┤
-│               Application                   │
-│       (Use Case Orchestration, DTOs)        │
-├─────────────────────────────────────────────┤
 │                 Domain                      │
-│      (Entities, Use Cases, Interfaces)      │
+│   (Entities, Use Cases, Repository/Service  │
+│              Interfaces)                    │
 │        ⚠️ NO EXTERNAL DEPENDENCIES          │
 ├─────────────────────────────────────────────┤
 │             Infrastructure                  │
 │    (File System, APIs, Databases, etc.)     │
+│      Implements Domain Interfaces           │
 └─────────────────────────────────────────────┘
 ```
 
-**Dependency Rule**: Dependencies point inward. Outer layers depend on inner layers, never the reverse.
+**Dependency Rule**: Dependencies point inward. Outer layers depend on inner layers, never the reverse. Use cases belong in the Domain layer and receive infrastructure implementations via dependency injection.

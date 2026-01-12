@@ -38,7 +38,7 @@ Each command handler:
 3. Calls the appropriate use case
 4. Formats and outputs the result
 
-### Application Layer
+### Domain Layer - Use Cases
 
 #### CreateArtifact Use Case
 

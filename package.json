@@ -3,6 +3,12 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "bin": {
+    "artifact": "./index.ts"
+  },
+  "scripts": {
+    "artifact": "bun run index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^25.0.6"
