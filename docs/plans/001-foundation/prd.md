@@ -2,15 +2,15 @@
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **Artifact** | A previewable unit consisting of a React component, its dependencies, and an associated server instance |
-| **Artifact ID** | A short unique identifier (e.g., `a1b2c3`) used to reference an artifact across commands |
-| **Component Analysis** | The process of parsing a React component file to extract its code, dependencies, and local imports |
-| **Sandpack** | CodeSandbox's in-browser bundler that can compile and run React code without a build step |
-| **Hot Reload** | Updating a running artifact's code without restarting the server |
-| **Temp Directory** | System temporary directory (`os.tmpdir()`) where artifact files are generated |
-| **Preview Server** | A Bun HTTP server that serves the Sandpack-based preview application |
+| Term                   | Definition                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Artifact**           | A previewable unit consisting of a React component, its dependencies, and an associated server instance |
+| **Artifact ID**        | A short unique identifier (e.g., `a1b2c3`) used to reference an artifact across commands                |
+| **Component Analysis** | The process of parsing a React component file to extract its code, dependencies, and local imports      |
+| **Sandpack**           | CodeSandbox's in-browser bundler that can compile and run React code without a build step               |
+| **Hot Reload**         | Updating a running artifact's code without restarting the server                                        |
+| **Temp Directory**     | System temporary directory (`os.tmpdir()`) where artifact files are generated                           |
+| **Preview Server**     | A Bun HTTP server that serves the Sandpack-based preview application                                    |
 
 ## User Stories
 
@@ -21,6 +21,7 @@
 **So that** I can see the component rendered in isolation in my browser.
 
 **Acceptance Criteria:**
+
 - [ ] Running `artifact create ./src/Button.tsx` generates preview files in temp directory
 - [ ] The CLI parses the component file using TypeScript AST
 - [ ] All npm dependencies are identified and included in Sandpack config
@@ -30,13 +31,14 @@
 - [ ] The artifact metadata is persisted for future reference
 
 **Example:**
+
 ```bash
 $ artifact create ./src/components/Button.tsx
 
 ✓ Artifact created successfully!
   ID:  a1b2c3
   URL: http://localhost:3001
-  
+
   To update: artifact update a1b2c3
   To preview: artifact preview a1b2c3
 ```
@@ -50,6 +52,7 @@ $ artifact create ./src/components/Button.tsx
 **So that** I can see my changes without restarting the server.
 
 **Acceptance Criteria:**
+
 - [ ] Running `artifact update <id>` re-parses the source file
 - [ ] The generated Sandpack files are updated
 - [ ] Hot reload is triggered (page auto-refreshes or HMR kicks in)
@@ -58,6 +61,7 @@ $ artifact create ./src/components/Button.tsx
 - [ ] Works without specifying file path (uses original source file)
 
 **Example:**
+
 ```bash
 $ artifact update a1b2c3
 
@@ -75,12 +79,14 @@ $ artifact update a1b2c3
 **So that** I can view the component without copying/pasting the URL.
 
 **Acceptance Criteria:**
+
 - [ ] Running `artifact preview <id>` opens the URL in the default browser
 - [ ] Uses the `open` command (macOS) / `xdg-open` (Linux) / `start` (Windows)
 - [ ] Error is shown if artifact ID doesn't exist
 - [ ] Error is shown if artifact server is not running
 
 **Example:**
+
 ```bash
 $ artifact preview a1b2c3
 
@@ -96,6 +102,7 @@ $ artifact preview a1b2c3
 **So that** I don't have to manually specify dependencies.
 
 **Acceptance Criteria:**
+
 - [ ] npm package imports (e.g., `import React from 'react'`) are detected
 - [ ] Local relative imports (e.g., `import { utils } from './utils'`) are resolved
 - [ ] Recursively resolve imports from local files (1-2 levels deep)
@@ -111,6 +118,7 @@ $ artifact preview a1b2c3
 **So that** I can reference artifacts by ID after creating them.
 
 **Acceptance Criteria:**
+
 - [ ] Artifact metadata stored in a JSON file in temp directory
 - [ ] Metadata includes: id, sourceFile, componentName, port, pid, status, timestamps
 - [ ] Stale artifacts (server no longer running) are detectable

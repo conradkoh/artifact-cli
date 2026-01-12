@@ -22,9 +22,12 @@ export function updateCommand(): Command {
           serverManager
         );
 
-        const { artifact } = await useCase.execute({ artifactId: id });
+        const { artifact, serverRestarted } = await useCase.execute({ artifactId: id });
 
-        console.log('\n✓ Artifact updated!');
+        if (serverRestarted) {
+          console.log('\n✓ Artifact server restarted');
+        }
+        console.log('✓ Artifact updated!');
         console.log(`  ID:  ${artifact.id}`);
         console.log(`  URL: ${artifact.url}\n`);
       } catch (error) {

@@ -26,7 +26,7 @@ export function createArtifact(params: {
     componentName: params.componentName,
     tempDir: params.tempDir,
     port: params.port,
-    url: `http://localhost:${params.port}`,
+    url: `http://localhost:${params.port}/${params.id}`,
     pid: null,
     status: 'starting',
     createdAt: new Date(),

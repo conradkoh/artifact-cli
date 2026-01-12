@@ -43,13 +43,13 @@ User Command
 
 ## Design Patterns
 
-| Pattern                  | Usage                                                                   |
-| ------------------------ | ----------------------------------------------------------------------- |
-| **Clean Architecture**   | Separation of concerns across CLI, Domain, Infrastructure layers       |
-| **Repository Pattern**   | Abstract storage operations for artifacts (`ArtifactRepository`)        |
-| **Dependency Injection** | Use cases receive dependencies via constructor for testability          |
-| **Command Pattern**      | Each CLI command maps to a use case handler                             |
-| **Factory Pattern**      | `ArtifactFactory` creates properly configured artifact instances        |
+| Pattern                  | Usage                                                            |
+| ------------------------ | ---------------------------------------------------------------- |
+| **Clean Architecture**   | Separation of concerns across CLI, Domain, Infrastructure layers |
+| **Repository Pattern**   | Abstract storage operations for artifacts (`ArtifactRepository`) |
+| **Dependency Injection** | Use cases receive dependencies via constructor for testability   |
+| **Command Pattern**      | Each CLI command maps to a use case handler                      |
+| **Factory Pattern**      | `ArtifactFactory` creates properly configured artifact instances |
 
 ## Folder Structure
 

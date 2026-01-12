@@ -246,6 +246,17 @@ export function generateSandpackHtml(analysis: ComponentAnalysis): string {
         window.location.reload();
       }
     };
+    
+    // Heartbeat to keep server alive (every 30 seconds)
+    setInterval(() => {
+      fetch('/__heartbeat').catch(() => {
+        // Server may have timed out, show a message
+        console.log('Server connection lost. Run "artifact update" to restart.');
+      });
+    }, 30_000);
+    
+    // Send initial heartbeat
+    fetch('/__heartbeat').catch(() => {});
   </script>
 </body>
 </html>`;
