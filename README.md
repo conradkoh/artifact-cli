@@ -124,12 +124,20 @@ Install artifact-cli as a custom tool for [OpenCode](https://opencode.ai):
 artifact opencode install
 ```
 
-This creates tools that OpenCode's LLM can call:
-- `artifact-cli_create` - Create a preview from a React component
-- `artifact-cli_update` - Update an existing preview  
-- `artifact-cli_preview` - Open preview in browser
-- `artifact-cli_list` - List all artifacts and status
-- `artifact-cli_stop` - Stop server(s)
+This creates 3 tools that OpenCode's LLM can call:
+
+| Tool | Description |
+|------|-------------|
+| `artifact-cli_create` | Create an artifact from inline React code. Returns artifact ID and URL. |
+| `artifact-cli_update` | Update artifact code and hot reload the preview. |
+| `artifact-cli_open` | Open artifact in browser (starts server if stopped). |
+
+**How it works with agents:**
+1. Agent calls `create` with React component code → Gets artifact ID and URL
+2. Agent calls `update` with new code → Preview hot reloads automatically  
+3. Agent calls `open` to show the preview in browser (optional)
+
+The agent passes component code directly (not file paths), and all files are managed in a temp directory transparently.
 
 ## Preview UI
 
@@ -142,9 +150,16 @@ The preview interface features:
 ## How It Works
 
 1. **Parse** - The CLI parses your React component and detects dependencies
-2. **Generate** - Creates a Sandpack configuration in a temp directory
-3. **Serve** - Starts an isolated server for the preview
+2. **Store** - Saves component code to a temp directory (only user data stored)
+3. **Serve** - Starts an isolated server that generates Sandpack HTML on-the-fly
 4. **Preview** - Opens the component in your browser
+
+### Architecture Highlights
+
+- **Runtime from CLI** - Server and wrapper code live in the CLI, not copied to temp folder
+- **On-the-fly Generation** - HTML is generated at request time, not stored
+- **CLI Upgrades Apply Automatically** - Upgrading the CLI improves all existing artifacts
+- **Clean Data Separation** - Temp folder only contains your component code
 
 ## Architecture
 
@@ -160,8 +175,22 @@ src/
 │   └── services/           # Service interfaces
 └── infrastructure/         # External implementations
     ├── repositories/       # File-based storage
-    ├── services/           # TypeScript parser, Bun server
-    └── templates/          # Sandpack HTML template
+    ├── server/             # Artifact server module (spawned per artifact)
+    ├── services/           # TypeScript parser, server manager
+    └── templates/          # Sandpack HTML template generator
+```
+
+### Temp Folder Structure
+
+```
+{tmpdir}/artifact-cli/
+├── artifacts.json          # Artifact metadata
+└── artifacts/
+    └── {id}/
+        ├── component.tsx   # User data (only this is persistent!)
+        └── .runtime/       # Ephemeral runtime state
+            ├── server.pid
+            └── server.log
 ```
 
 ## Documentation
@@ -174,6 +203,9 @@ src/
 - [Plan 004: Artifact URL & Timeout](docs/plans/004-artifact-url-and-timeout/)
 - [Plan 005: OpenCode Integration](docs/plans/005-opencode-integration/)
 - [Plan 006: Server Lifecycle Improvements](docs/plans/006-server-lifecycle-improvements/)
+- [Plan 007: Simplified Agent Interface](docs/plans/007-simplified-agent-interface/)
+- [Plan 008: Agent Tool Fixes](docs/plans/008-agent-tool-fixes/)
+- [Plan 009: Separate Runtime from Data](docs/plans/009-separate-runtime-from-data/)
 
 ## Requirements
 

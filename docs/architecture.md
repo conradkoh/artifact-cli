@@ -58,11 +58,13 @@ artifact-cli/
 ├── src/
 │   ├── cli/
 │   │   ├── commands/           # CLI command definitions
-│   │   │   ├── create.ts       # artifact create <file>
-│   │   │   ├── update.ts       # artifact update <id> <file>
+│   │   │   ├── create.ts       # artifact create <file> | artifact create --code <base64>
+│   │   │   ├── update.ts       # artifact update <id> [--code <base64>]
 │   │   │   ├── preview.ts      # artifact preview <id>
+│   │   │   ├── open.ts         # artifact open <id> (starts server if stopped)
 │   │   │   ├── list.ts         # artifact list
-│   │   │   └── stop.ts         # artifact stop <id>
+│   │   │   ├── stop.ts         # artifact stop <id>
+│   │   │   └── opencode.ts     # artifact opencode install (agent tools)
 │   │   ├── output/             # Output formatters
 │   │   │   └── formatter.ts
 │   │   └── index.ts            # CLI entry point
@@ -74,7 +76,7 @@ artifact-cli/
 │   │   ├── usecases/           # Use case orchestration (business logic)
 │   │   │   ├── createArtifact.ts
 │   │   │   ├── updateArtifact.ts
-│   │   │   ├── previewArtifact.ts
+│   │   │   ├── openArtifact.ts
 │   │   │   ├── listArtifacts.ts
 │   │   │   └── stopArtifact.ts
 │   │   ├── repositories/       # Repository interfaces
@@ -86,10 +88,13 @@ artifact-cli/
 │   └── infrastructure/
 │       ├── repositories/       # Repository implementations
 │       │   └── FileArtifactRepository.ts
+│       ├── server/             # Artifact server module
+│       │   ├── index.ts        # Entry point (spawned per artifact)
+│       │   └── artifactServer.ts  # Server implementation
 │       ├── services/           # Service implementations
 │       │   ├── TypeScriptComponentParser.ts
 │       │   └── BunServerManager.ts
-│       └── templates/          # Sandpack configuration templates
+│       └── templates/          # Sandpack HTML template generator
 │           └── sandpackTemplate.ts
 │
 ├── docs/                       # Documentation
@@ -97,6 +102,28 @@ artifact-cli/
 ├── package.json
 └── tsconfig.json
 ```
+
+## Temp Folder Structure
+
+Artifacts are stored in the system temp directory with a clean separation of user data and runtime state:
+
+```
+{os.tmpdir()}/artifact-cli/
+├── artifacts.json              # Artifact metadata (ID, port, component name, etc.)
+└── artifacts/
+    └── {artifactId}/
+        ├── component.tsx       # User data (only persistent file!)
+        └── .runtime/           # Ephemeral runtime state
+            ├── server.pid      # Server process ID
+            ├── server.log      # Server output log
+            └── .reload         # Signal file for hot reload
+```
+
+**Key Design Decisions:**
+- **Runtime from CLI**: Server code lives in CLI (`src/infrastructure/server/`), not copied per artifact
+- **On-the-fly HTML**: Sandpack HTML is generated at request time, not stored
+- **CLI Upgrades Apply Automatically**: Upgrading the CLI improves all existing artifacts
+- **Clean Data**: Only `component.tsx` (user data) is stored; everything else is ephemeral
 
 ## Key Technologies
 
@@ -117,11 +144,12 @@ artifact-cli/
  */
 interface Artifact {
   id: string; // Unique identifier (e.g., "abc123")
-  sourceFile: string; // Absolute path to source component
+  sourceFile: string | null; // Original file path (null for inline code)
+  sourceCode: string | null; // Inline code content (for agent-created artifacts)
   componentName: string; // Exported component name
-  tempDir: string; // Path to generated files in temp directory
+  tempDir: string; // Path to artifact directory in temp folder
   port: number; // Server port
-  url: string; // Full URL (e.g., "http://localhost:3001")
+  url: string; // Full URL (e.g., "http://localhost:3001/abc123")
   pid: number | null; // Server process ID (null if not running)
   status: ArtifactStatus; // Current status
   createdAt: Date;
@@ -188,21 +216,30 @@ interface ServerManager {
 ```typescript
 // CLI Command Inputs
 interface CreateCommandInput {
-  filePath: string; // Path to React component file
+  filePath?: string; // Path to React component file
+  code?: string; // Or inline code (base64 encoded)
+  name?: string; // Optional component name override
 }
 
 interface UpdateCommandInput {
   artifactId: string; // Artifact to update
-  filePath?: string; // Optional new file path
+  code?: string; // New code (base64 encoded)
 }
 
-interface PreviewCommandInput {
-  artifactId: string; // Artifact to preview
+interface OpenCommandInput {
+  artifactId: string; // Artifact to open (starts server if stopped)
 }
 
 // CLI Command Outputs
 interface CreateCommandOutput {
   artifact: Artifact;
+  message: string;
+  stopInstructions: string;
+}
+
+interface UpdateCommandOutput {
+  artifact: Artifact;
+  serverRestarted: boolean;
   message: string;
 }
 
@@ -210,3 +247,15 @@ interface ListCommandOutput {
   artifacts: Artifact[];
 }
 ```
+
+### Agent Tools (OpenCode Integration)
+
+The CLI exposes 3 tools for AI agents:
+
+| Tool | Arguments | Returns |
+|------|-----------|---------|
+| `artifact-cli_create` | `code: string`, `name?: string` | Artifact ID, URL, stop instructions |
+| `artifact-cli_update` | `id: string`, `code: string` | Success message with URL |
+| `artifact-cli_open` | `id: string` | Opens browser, handles errors gracefully |
+
+Agents pass component code directly (not file paths). Code is base64 encoded for transmission.
