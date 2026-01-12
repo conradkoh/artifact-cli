@@ -70,6 +70,39 @@ Open the artifact URL in your default browser:
 artifact preview <artifact-id>
 ```
 
+### List Artifacts
+
+See all artifacts and their server status:
+
+```bash
+artifact list
+```
+
+Output:
+
+```
+Artifacts:
+
+  ID        Component           Status      URL
+  ----------------------------------------------------------------------
+  a1b2c3    Button              running     http://localhost:3001/a1b2c3
+  d4e5f6    Card                stopped     http://localhost:3002/d4e5f6
+```
+
+### Stop Servers
+
+Stop a single server:
+
+```bash
+artifact stop <artifact-id>
+```
+
+Stop all running servers:
+
+```bash
+artifact stop --all
+```
+
 ## Example
 
 ```bash
@@ -95,6 +128,8 @@ This creates tools that OpenCode's LLM can call:
 - `artifact-cli_create` - Create a preview from a React component
 - `artifact-cli_update` - Update an existing preview  
 - `artifact-cli_preview` - Open preview in browser
+- `artifact-cli_list` - List all artifacts and status
+- `artifact-cli_stop` - Stop server(s)
 
 ## Preview UI
 
@@ -138,6 +173,7 @@ src/
 - [Plan 003: NPM Distribution](docs/plans/003-npm-distribution/)
 - [Plan 004: Artifact URL & Timeout](docs/plans/004-artifact-url-and-timeout/)
 - [Plan 005: OpenCode Integration](docs/plans/005-opencode-integration/)
+- [Plan 006: Server Lifecycle Improvements](docs/plans/006-server-lifecycle-improvements/)
 
 ## Requirements
 

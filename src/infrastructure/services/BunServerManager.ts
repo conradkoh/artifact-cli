@@ -4,8 +4,6 @@ import type { Artifact } from '../../domain/entities/Artifact';
 import type { ServerManager } from '../../domain/services/ServerManager';
 import { getArtifactDir } from '../repositories/FileArtifactRepository';
 
-const TIMEOUT_SECONDS = 60;
-
 export class BunServerManager implements ServerManager {
   async start(artifact: Artifact): Promise<{ pid: number; port: number }> {
     const artifactDir = getArtifactDir(artifact.id);
@@ -75,19 +73,6 @@ const clients: Set<ReadableStreamDefaultController> = new Set();
 const artifactDir = '${artifactDir.replace(/\\/g, '\\\\')}';
 const artifactId = '${artifactId}';
 
-// Auto-timeout: track last activity
-let lastActivity = Date.now();
-const TIMEOUT_MS = ${TIMEOUT_SECONDS * 1000};
-
-// Check for timeout every 10 seconds
-const timeoutCheck = setInterval(() => {
-  if (Date.now() - lastActivity > TIMEOUT_MS) {
-    console.log('Server timed out after ${TIMEOUT_SECONDS}s of inactivity, shutting down...');
-    clearInterval(timeoutCheck);
-    process.exit(0);
-  }
-}, 10_000);
-
 // Watch for reload signal
 watch(artifactDir, (event, filename) => {
   if (filename === '.reload' || filename === 'index.html') {
@@ -104,15 +89,8 @@ const server = Bun.serve({
   async fetch(req) {
     const url = new URL(req.url);
     
-    // Heartbeat endpoint - resets the timeout
-    if (url.pathname === '/__heartbeat') {
-      lastActivity = Date.now();
-      return new Response('ok');
-    }
-    
     // SSE endpoint for hot reload
     if (url.pathname === '/__reload') {
-      lastActivity = Date.now();
       const stream = new ReadableStream({
         start(controller) {
           clients.add(controller);
@@ -135,7 +113,6 @@ const server = Bun.serve({
     // Serve index.html for artifact path
     const pathname = url.pathname;
     if (pathname === '/' + artifactId || pathname === '/' + artifactId + '/') {
-      lastActivity = Date.now();
       const indexPath = join(artifactDir, 'index.html');
       const html = await Bun.file(indexPath).text();
       return new Response(html, {

@@ -2,6 +2,8 @@ import { Command } from 'commander';
 import { createCommand } from './commands/create';
 import { updateCommand } from './commands/update';
 import { previewCommand } from './commands/preview';
+import { listCommand } from './commands/list';
+import { stopCommand } from './commands/stop';
 import { opencodeCommand } from './commands/opencode';
 
 const program = new Command();
@@ -14,6 +16,8 @@ program
 program.addCommand(createCommand());
 program.addCommand(updateCommand());
 program.addCommand(previewCommand());
+program.addCommand(listCommand());
+program.addCommand(stopCommand());
 program.addCommand(opencodeCommand());
 
 program.parse();
